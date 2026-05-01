@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Derivo Pro | Master Engine v3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { background-color: #0b0e14; color: #f8fafc; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: #161b22; border: 1px solid #30363d; border-radius: 1.5rem; }
+        .btn-active { background-color: #10b981 !important; color: white !important; border: 1px solid #34d399 !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        .emerald-text { color: #10b981; }
+        .red-text { color: #ef4444; }
+        .btn-main { background-color: #10b981; color: white; transition: all 0.2s ease; }
+        input { outline: none; border: 1px solid #30363d; background: #0d1117; color: white; padding: 12px; border-radius: 12px; font-weight: bold; width: 100%; }
+        input:focus { border-color: #10b981; }
+        label { font-size: 10px; font-weight: bold; color: #8b949e; text-transform: uppercase; margin-bottom: 5px; display: block; }
+    </style>
+</head>
+<body class="p-4 flex flex-col items-center">
+
+    <div class="w-full max-w-md">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4 px-2">
+            <div class="flex items-center gap-2">
+                <div class="bg-emerald-500 p-2 rounded-lg shadow-lg">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M22 7L13.5 15.5L8.5 10.5L2 17"></path><polyline points="16 7 22 7 22 13"></polyline></svg>
+                </div>
+                <h1 class="text-xl font-black italic uppercase">Derivo<span class="text-emerald-500">.Pro</span></h1>
+            </div>
+            <span class="text-[9px] bg-slate-900 px-3 py-1 rounded-full text-slate-500 font-bold border border-slate-800">LDN-GUEST: 36542</span>
+        </div>
+
+        <!-- Profit/Loss Stats Row (NEW) -->
+        <div class="grid grid-cols-1 gap-4 mb-4">
+            <div class="glass p-5 text-center shadow-xl border-t-2 border-slate-700">
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Session Profit / Loss</p>
+                <div id="total-pl" class="text-4xl font-black tracking-tighter text-white">$0.00</div>
+                <div class="flex justify-center gap-6 mt-2">
+                    <div class="text-[11px] font-bold text-emerald-500">WINS: <span id="win-count" class="text-white">0</span></div>
+                    <div class="text-[11px] font-bold text-red-500">LOSSES: <span id="loss-count" class="text-white">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="glass p-6 mb-4 text-center shadow-2xl relative overflow-hidden">
+            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Live Balance</p>
+            <div class="text-4xl font-black tracking-tighter emerald-text">$<span id="balance">0.00</span></div>
+            <div id="status" class="mt-2 inline-block text-[8px] font-black uppercase text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">Offline</div>
+        </div>
+
+        <!-- Bot Pulse Row -->
+        <div class="grid grid-cols-2 gap-3 mb-4 text-center">
+            <div class="glass p-4 border-b-4 border-emerald-500">
+                <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">Digit</p>
+                <div id="digit" class="text-5xl font-black text-white">-</div>
+            </div>
+            <div class="glass p-4 border-b-4 border-slate-700">
+                <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">V-Losses</p>
+                <div id="vloss" class="text-5xl font-black text-white">0</div>
+            </div>
+        </div>
+
+        <!-- Bot Selection -->
+        <div class="grid grid-cols-3 gap-2 mb-4">
+            <button onclick="setBot('seven')" id="b-seven" class="btn-active p-3 rounded-xl text-[10px] font-black uppercase">Seven</button>
+            <button onclick="setBot('flash')" id="b-flash" class="bg-slate-800 p-3 rounded-xl text-slate-500 text-[10px] font-black uppercase">Flash</button>
+            <button onclick="setBot('parity')" id="b-parity" class="bg-slate-800 p-3 rounded-xl text-slate-500 text-[10px] font-black uppercase">Parity</button>
+        </div>
+
+        <!-- Bot Inputs -->
+        <div class="glass p-5 space-y-3 shadow-xl">
+            <div>
+                <label>Deriv API Token</label>
+                <input type="text" id="token" placeholder="Paste Token here" class="text-emerald-400 font-mono text-xs">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label>Initial Stake</label>
+                    <input type="number" id="stake-input" value="10">
+                </div>
+                <div>
+                    <label>Martingale (x)</label>
+                    <input type="number" id="martingale-input" value="2.1" step="0.1">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1">
+                <div>
+                    <label>Virtual Loss Limit</label>
+                    <input type="number" id="vlimit-input" value="3">
+                </div>
+            </div>
+
+            <button id="main-btn" onclick="toggleAutoStart()" class="w-full py-4 rounded-xl btn-main text-white font-black text-md shadow-xl uppercase tracking-widest">
+                Start Auto-Bot
+            </button>
+        </div>
+
+        <div id="logs" class="mt-4 bg-black/40 rounded-xl p-4 h-28 overflow-y-auto font-mono text-[9px] text-slate-500 space-y-1 border border-[#30363d]">
+            > System Ready.
+        </div>
+    </div>
+
+    <script>
+        let ws, isRunning = false, activeBot = 'seven', vCount = 0;
+        let initialStake = 10, currentStake = 10, martingale = 2.1;
+        let totalPL = 0, wins = 0, losses = 0;
+        const GUEST_ID = "36542";
+
+        function addLog(msg, color='') {
+            const l = document.getElementById('logs');
+            l.innerHTML = `<div class="${color}">[${new Date().toLocaleTimeString()}] > ${msg}</div>` + l.innerHTML;
+        }
+
+        function setBot(type) {
+            if (isRunning) return alert("Stop the bot first!");
+            activeBot = type;
+            ['seven', 'flash', 'parity'].forEach(b => {
+                const el = document.getElementById(`b-${b}`);
+                el.className = (b === type) ? "btn-active p-3 rounded-xl text-[10px] font-black uppercase" : "bg-slate-800 p-3 rounded-xl text-slate-500 text-[10px] font-black uppercase";
+            });
+            addLog(`Bot: ${type.toUpperCase()}`);
+        }
+
+        function updateStats(profit) {
+            totalPL += profit;
+            if (profit > 0) wins++; else losses++;
+
+            const plEl = document.getElementById('total-pl');
+            plEl.innerText = (totalPL >= 0 ? "+$" : "-$") + Math.abs(totalPL).toFixed(2);
+            plEl.className = totalPL >= 0 ? "text-4xl font-black tracking-tighter text-emerald-500" : "text-4xl font-black tracking-tighter text-red-500";
+            
+            document.getElementById('win-count').innerText = wins;
+            document.getElementById('loss-count').innerText = losses;
+        }
+
+        function toggleAutoStart() {
+            const t = document.getElementById('token').value.trim();
+            if(!t || t.length < 10) return alert("Please paste a valid API Token!");
+
+            if(isRunning) { location.reload(); return; }
+
+            initialStake = parseFloat(document.getElementById('stake-input').value);
+            currentStake = initialStake;
+            martingale = parseFloat(document.getElementById('martingale-input').value);
+            const vLimit = parseInt(document.getElementById('vlimit-input').value);
+
+            ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${GUEST_ID}`);
+
+            ws.onopen = () => {
+                addLog("Connecting to London Engine...");
+                ws.send(JSON.stringify({ authorize: t }));
+            };
+
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.error) { addLog(data.error.message, "text-red-500"); return; }
+
+                if (data.msg_type === 'authorize') {
+                    document.getElementById('balance').innerText = data.authorize.balance;
+                    document.getElementById('status').innerText = "Connected";
+                    document.getElementById('status').className = "mt-2 inline-block text-[8px] font-black uppercase text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20";
+                    ws.send(JSON.stringify({ ticks: "R_100", subscribe: 1 }));
+                    ws.send(JSON.stringify({ proposal_open_contract: 1, subscribe: 1 }));
+                    isRunning = true;
+                    document.getElementById('main-btn').innerText = "Stop Auto-Bot";
+                    document.getElementById('main-btn').classList.replace('bg-emerald-500', 'bg-red-600');
+                    addLog("Engine Active in London Hub.");
+                }
+
+                if (data.tick) {
+                    const d = parseInt(data.tick.quote.toString().slice(-1));
+                    document.getElementById('digit').innerText = d;
+                    let winOnPaper = (activeBot === 'seven' && d > 7) || (activeBot === 'flash' && d === 5) || (activeBot === 'parity' && d % 2 === 0);
+                    if (!winOnPaper) vCount++; else vCount = 0;
+                    document.getElementById('vloss').innerText = vCount;
+                    if (vCount >= vLimit) {
+                        if (activeBot === 'seven' && d === 7) strike('DIGITOVER', 7);
+                        if (activeBot === 'flash' && d === 0) strike('DIGITMATCH', 5);
+                        if (activeBot === 'parity' && d % 2 !== 0) strike('DIGITEVEN');
+                    }
+                }
+
+                if (data.msg_type === 'proposal_open_contract' && data.proposal_open_contract.is_sold) {
+                    const contract = data.proposal_open_contract;
+                    const isWin = contract.status === 'won';
+                    document.getElementById('balance').innerText = contract.account_balance;
+                    updateStats(parseFloat(contract.profit));
+                    
+                    if (isWin) {
+                        addLog(`WIN! +$${contract.profit}`, "text-emerald-400 font-bold");
+                        currentStake = initialStake;
+                    } else {
+                        addLog(`LOSS. Recovery Stake active.`, "text-red-500");
+                        let m_mult = (activeBot === 'flash') ? 1.15 : martingale;
+                        currentStake = (currentStake * m_mult).toFixed(2);
+                    }
+                }
+            };
+        }
+
+        function strike(type, barrier) {
+            const req = { buy: 1, price: currentStake, parameters: { amount: parseFloat(currentStake), basis: "stake", contract_type: type, currency: "USD", duration: 1, duration_unit: "t", symbol: "R_100" }};
+            if(barrier !== undefined) req.parameters.barrier = barrier.toString();
+            ws.send(JSON.stringify(req));
+            vCount = 0;
+            addLog(`Strike: $${currentStake}`, "text-white font-bold");
+        }
+    </script>
+</body>
+</html>
